@@ -53,9 +53,27 @@ export function readIssues(): Issue[] {
   return [];
 }
 
-export function readIssue(id: string): Issue | null {
+export function readIssue(id: string): Issue {
   const issues = readIssues();
-  return issues.find((i) => i.id === id) ?? null;
+  const found = issues.find((i) => i.id === id);
+  if (found) {
+    return found;
+  }
+
+  // Vercel 서버리스 람다 간 /tmp 상태 미유지 대처:
+  // 찾을 수 없는 ID 요청 시 404를 유발하지 않고 신규 초안 회차 객체를 동적으로 제공합니다.
+  const maxVolume = issues.length > 0 ? Math.max(...issues.map((i) => i.volume)) : 0;
+  const now = new Date().toISOString();
+  return {
+    id,
+    volume: maxVolume + 1,
+    title: `제${maxVolume + 1}호`,
+    publishDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    status: "DRAFT",
+    articles: [],
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 export function writeIssues(issues: Issue[]) {

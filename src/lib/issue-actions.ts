@@ -14,9 +14,9 @@ export async function getIssues(): Promise<Issue[]> {
 }
 
 // ──────────────────────────────────────────────
-// 단건 회차 조회
+// 단건 회차 조회 (서버리스 404 방지 지원)
 // ──────────────────────────────────────────────
-export async function getIssue(id: string): Promise<Issue | null> {
+export async function getIssue(id: string): Promise<Issue> {
   return readIssue(id);
 }
 
@@ -54,7 +54,6 @@ export async function saveIssue(
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const existing = readIssue(id);
-    if (!existing) return { ok: false, error: "회차를 찾을 수 없습니다." };
 
     const now = new Date().toISOString();
     const updatedArticles = articles.map((a) => ({
@@ -88,7 +87,6 @@ export async function publishIssue(
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const existing = readIssue(id);
-    if (!existing) return { ok: false, error: "회차를 찾을 수 없습니다." };
 
     upsertIssue({
       ...existing,
