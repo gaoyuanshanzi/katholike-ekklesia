@@ -1,0 +1,38 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum IssueStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Issue {
+  id          String      @id @default(uuid())
+  volume      Int
+  title       String
+  publishDate DateTime
+  status      IssueStatus @default(DRAFT)
+  articles    Article[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Article {
+  id            String   @id @default(uuid())
+  issueId       String
+  issue         Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  title         String
+  description   String
+  content       String   // Rich Text / HTML
+  coverImageUrl String
+  author        String
+  readTime      Int      // read time in minutes
+  isFeatured    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
