@@ -35,7 +35,7 @@ export default function RootLayout({
       lang="ko"
       className={`${cinzel.variable} ${notoSerifKR.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0a0a14] text-slate-100">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#faf9f5] text-slate-900">{children}</body>
     </html>
   );
 }

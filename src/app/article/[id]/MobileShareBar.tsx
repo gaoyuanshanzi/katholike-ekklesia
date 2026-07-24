@@ -10,7 +10,7 @@ export default function MobileShareBar({
   onFontScale?: (scale: number) => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const [fontScaleIndex, setFontScaleIndex] = useState(1); // 0: 16px, 1: 18px, 2: 20px
+  const [fontScaleIndex, setFontScaleIndex] = useState(1);
   const fontScales = [16, 18, 20];
 
   function handleCopy() {
@@ -38,10 +38,10 @@ export default function MobileShareBar({
   return (
     <aside
       aria-label="기사 독서 도구"
-      className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/10 bg-[#0a0a14]/90 px-4 py-3 backdrop-blur-xl md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-md md:hidden text-slate-900"
     >
       <div className="mx-auto flex max-w-xl items-center justify-between gap-2">
-        <span className="truncate text-xs text-slate-400 max-w-[160px]">
+        <span className="truncate text-xs font-medium text-slate-600 max-w-[160px]">
           {title}
         </span>
 
@@ -50,20 +50,20 @@ export default function MobileShareBar({
           <button
             type="button"
             onClick={toggleFont}
-            className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 transition active:scale-95"
+            className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition active:scale-95"
             title="글자 크기 변경"
           >
             <span className="font-serif">가</span>
-            <span className="text-3xs text-amber-400">{fontScales[fontScaleIndex]}px</span>
+            <span className="text-3xs text-amber-700">{fontScales[fontScaleIndex]}px</span>
           </button>
 
           {/* 공유 버튼 */}
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-300 transition active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl border border-amber-600/40 bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-900 transition active:scale-95"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5 text-amber-700">
               <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-10.628a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5zm0 10.628a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
             </svg>
             {copied ? "복사됨!" : "공유"}
@@ -73,7 +73,7 @@ export default function MobileShareBar({
           <button
             type="button"
             onClick={scrollToTop}
-            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition active:scale-95"
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition active:scale-95"
             aria-label="맨 위로 스크롤"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">

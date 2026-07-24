@@ -2,13 +2,12 @@ import { readIssues } from "./data";
 import type { Issue, Article } from "./types";
 
 // ──────────────────────────────────────────────
-// 고화질 이미지 URL 상수
+// 첨부된 목가적 시골 마을 수채화 이미지
 // ──────────────────────────────────────────────
-export const PASTORAL_HERO_IMAGE =
-  "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=2000&q=85";
+export const PASTORAL_HERO_IMAGE = "/images/pastoral_village.jpg";
 
 export const ARTICLE_COVERS = [
-  "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80",
+  "/images/pastoral_village.jpg",
   "https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1200&q=80",
   "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80",
   "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=1200&q=80",
@@ -16,20 +15,20 @@ export const ARTICLE_COVERS = [
 ];
 
 // ──────────────────────────────────────────────
-// 샘플 회차 데이터 (풍부하고 감성적인 가톨릭 웹진 콘텐츠)
+// 공식 제1호 회차 데이터 (Vol. 1)
 // ──────────────────────────────────────────────
 export const SAMPLE_ISSUE: Issue = {
-  id: "sample-issue-vol1",
+  id: "issue-vol1",
   volume: 1,
-  title: "평화와 은총의 산골 마을",
-  publishDate: "2026-07-01",
+  title: "제1호 - 평화와 은총의 산골 마을",
+  publishDate: "2026-08-23",
   status: "PUBLISHED",
-  createdAt: "2026-07-01T00:00:00.000Z",
-  updatedAt: "2026-07-01T00:00:00.000Z",
+  createdAt: "2026-08-23T00:00:00.000Z",
+  updatedAt: "2026-08-23T00:00:00.000Z",
   articles: [
     {
       id: "art-hero-1",
-      issueId: "sample-issue-vol1",
+      issueId: "issue-vol1",
       order: 1,
       title: "산기슭 아래 작은 성당과 목가적 삶의 침묵",
       description:
@@ -40,7 +39,7 @@ export const SAMPLE_ISSUE: Issue = {
 <h3>1. 자연과 묵상: 섭리의 신비</h3>
 <p>가톨릭 전통에서 자연은 '제2의 성경'으로 불려왔습니다. 성 보나벤투라는 창조물 하나하나가 창조주의 신비를 담아내는 거울이라고 말했습니다. 푸른 들판을 가로지르는 맑은 시냇물과 대지를 일구는 노동자들의 소박한 땀방울 속에서 우리는 하느님의 숨결을 느낍니다.</p>
 
-<blockquote className="my-6 border-l-4 border-amber-500/60 pl-4 font-serif italic text-amber-200/90">
+<blockquote className="my-6 border-l-4 border-amber-600 pl-4 font-serif italic text-amber-900 bg-amber-50/60 py-2">
 "하늘은 하느님의 영광을 선포하고, 손수 만드신 하느님의 일들을 푸른 창공이 알리도다." — 시편 19장 2절
 </blockquote>
 
@@ -53,16 +52,16 @@ export const SAMPLE_ISSUE: Issue = {
       author: "베드로 신부",
       readTime: 6,
       isFeatured: true,
-      createdAt: "2026-07-01T00:00:00.000Z",
-      updatedAt: "2026-07-01T00:00:00.000Z",
+      createdAt: "2026-08-23T00:00:00.000Z",
+      updatedAt: "2026-08-23T00:00:00.000Z",
     },
     {
       id: "art-sub-2",
-      issueId: "sample-issue-vol1",
+      issueId: "issue-vol1",
       order: 2,
       title: "기억과 성찰: 교회사 속 침묵의 기도자들",
       description:
-        "사막의 교부들로부터 사막과 산골짝에서 침묵의 기도를 드리던 수도자들의 영성과 영혼의 조용한 성찰 이야기.",
+        "사막의 교부들로부터 산골짝에서 침묵의 기도를 드리던 수도자들의 영성과 조용한 성찰 이야기.",
       content: `
 <p>소음이 가득한 세상 속에서 침묵은 더 이상 빈 공간이 아닌 하느님의 현존입니다. 4세기 사막의 교부들은 세상의 소음을 뒤로하고 사막으로 향했습니다.</p>
 <p>오늘날 우리에게 침묵은 거룩한 소통입니다. 내면의 소음을 내려놓을 때 하느님의 부드러운 속삭임이 들려옵니다.</p>
@@ -71,12 +70,12 @@ export const SAMPLE_ISSUE: Issue = {
       author: "클라라 수녀",
       readTime: 4,
       isFeatured: false,
-      createdAt: "2026-07-01T00:00:00.000Z",
-      updatedAt: "2026-07-01T00:00:00.000Z",
+      createdAt: "2026-08-23T00:00:00.000Z",
+      updatedAt: "2026-08-23T00:00:00.000Z",
     },
     {
       id: "art-sub-3",
-      issueId: "sample-issue-vol1",
+      issueId: "issue-vol1",
       order: 3,
       title: "일상 속 작은 성체성사: 빵을 나누는 감사",
       description:
@@ -89,12 +88,12 @@ export const SAMPLE_ISSUE: Issue = {
       author: "요한 형제",
       readTime: 3,
       isFeatured: false,
-      createdAt: "2026-07-01T00:00:00.000Z",
-      updatedAt: "2026-07-01T00:00:00.000Z",
+      createdAt: "2026-08-23T00:00:00.000Z",
+      updatedAt: "2026-08-23T00:00:00.000Z",
     },
     {
       id: "art-sub-4",
-      issueId: "sample-issue-vol1",
+      issueId: "issue-vol1",
       order: 4,
       title: "시골 마을의 노을 아래서 드리는 저녁 기도",
       description:
@@ -107,12 +106,12 @@ export const SAMPLE_ISSUE: Issue = {
       author: "마리아 자매",
       readTime: 5,
       isFeatured: false,
-      createdAt: "2026-07-01T00:00:00.000Z",
-      updatedAt: "2026-07-01T00:00:00.000Z",
+      createdAt: "2026-08-23T00:00:00.000Z",
+      updatedAt: "2026-08-23T00:00:00.000Z",
     },
     {
       id: "art-sub-5",
-      issueId: "sample-issue-vol1",
+      issueId: "issue-vol1",
       order: 5,
       title: "아이들의 웃음소리와 희망: 미래 교회의 빛",
       description:
@@ -125,8 +124,8 @@ export const SAMPLE_ISSUE: Issue = {
       author: "스테파노 연구원",
       readTime: 4,
       isFeatured: false,
-      createdAt: "2026-07-01T00:00:00.000Z",
-      updatedAt: "2026-07-01T00:00:00.000Z",
+      createdAt: "2026-08-23T00:00:00.000Z",
+      updatedAt: "2026-08-23T00:00:00.000Z",
     },
   ],
 };
@@ -144,7 +143,6 @@ export async function getLatestPublishedIssue(): Promise<Issue> {
     return published[0];
   }
 
-  // 발행된 호가 없으면 샘플 이슈 사용
   return SAMPLE_ISSUE;
 }
 
