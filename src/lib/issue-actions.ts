@@ -1,65 +1,28 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { readIssues, readIssue, upsertIssue } from "./data";
+import { readIssues, readIssue, upsertIssue, writeIssues } from "./data";
+import { syncPublishedIssuesToCookie, syncArticleToCookie } from "./public-actions";
 import type { Issue, ArticleInput, IssueInput } from "./types";
 
-// ──────────────────────────────────────────────
-// 회차 목록 조회
-// ──────────────────────────────────────────────
+// ── 회차 목록 조회 ────────────────────────────────────────────────
 export async function getIssues(): Promise<Issue[]> {
   const issues = readIssues();
-
-  // 쿠키에 보관된 발행 건이 있으면 병합
-  try {
-    const cookieStore = await cookies();
-    const cookieVal = cookieStore.get("latest_published_issue")?.value;
-    if (cookieVal) {
-      const parsed = JSON.parse(cookieVal) as Issue;
-      if (parsed && !issues.some((i) => i.id === parsed.id)) {
-        issues.unshift(parsed);
-      }
-    }
-  } catch {
-    // Ignore
-  }
-
   return issues.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
-// ──────────────────────────────────────────────
-// 단건 회차 조회
-// ──────────────────────────────────────────────
+// ── 단건 회차 조회 ────────────────────────────────────────────────
 export async function getIssue(id: string): Promise<Issue> {
-  const issue = readIssue(id);
-  if (issue.articles.length > 0) return issue;
-
-  // 쿠키 저장본에서 복원 시도
-  try {
-    const cookieStore = await cookies();
-    const cookieVal = cookieStore.get("latest_published_issue")?.value;
-    if (cookieVal) {
-      const parsed = JSON.parse(cookieVal) as Issue;
-      if (parsed && parsed.id === id) {
-        return parsed;
-      }
-    }
-  } catch {
-    // Ignore
-  }
-
-  return issue;
+  return readIssue(id);
 }
 
-// ──────────────────────────────────────────────
-// 새 회차 생성 (DRAFT 상태)
-// ──────────────────────────────────────────────
+// ── 새 회차 생성 (DRAFT) ──────────────────────────────────────────
 export async function createIssue(): Promise<string> {
   const issues = readIssues();
-  const maxVolume = issues.length > 0 ? Math.max(...issues.map((i) => i.volume)) : 0;
+  const maxVolume =
+    issues.length > 0 ? Math.max(...issues.map((i) => i.volume)) : 0;
   const now = new Date().toISOString();
 
   const newIssue: Issue = {
@@ -78,9 +41,7 @@ export async function createIssue(): Promise<string> {
   return newIssue.id;
 }
 
-// ──────────────────────────────────────────────
-// 회차 + 기사 저장 (임시 저장)
-// ──────────────────────────────────────────────
+// ── 회차 + 기사 저장 (임시 저장) ─────────────────────────────────
 export async function saveIssue(
   id: string,
   issueInput: IssueInput,
@@ -89,11 +50,13 @@ export async function saveIssue(
   try {
     const existing = readIssue(id);
     const now = new Date().toISOString();
+
     const updatedArticles = articles.map((a) => ({
       ...a,
       id: a.id ?? crypto.randomUUID(),
       issueId: id,
-      createdAt: existing.articles.find((ea) => ea.order === a.order)?.createdAt ?? now,
+      createdAt:
+        existing.articles.find((ea) => ea.order === a.order)?.createdAt ?? now,
       updatedAt: now,
     }));
 
@@ -106,18 +69,11 @@ export async function saveIssue(
 
     upsertIssue(updatedIssue);
 
-    // 발행 상태인 경우 쿠키 동기화
+    // 이미 발행된 상태라면 쿠키도 갱신
     if (updatedIssue.status === "PUBLISHED") {
-      try {
-        const cookieStore = await cookies();
-        cookieStore.set("latest_published_issue", JSON.stringify(updatedIssue), {
-          path: "/",
-          maxAge: 60 * 60 * 24 * 365,
-          sameSite: "lax",
-        });
-      } catch {
-        // Ignore
-      }
+      const allIssues = readIssues();
+      await syncPublishedIssuesToCookie(allIssues);
+      await syncArticleToCookie(updatedIssue);
     }
 
     revalidatePath("/");
@@ -130,9 +86,7 @@ export async function saveIssue(
   }
 }
 
-// ──────────────────────────────────────────────
-// 회차 즉시 발행 (캐시 갱신 + 쿠키 동기화)
-// ──────────────────────────────────────────────
+// ── 회차 즉시 발행 ────────────────────────────────────────────────
 export async function publishIssue(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
@@ -146,19 +100,11 @@ export async function publishIssue(
 
     upsertIssue(updatedIssue);
 
-    // Vercel 서버리스 람다 간 동기화를 위한 쿠키 저장
-    try {
-      const cookieStore = await cookies();
-      cookieStore.set("latest_published_issue", JSON.stringify(updatedIssue), {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-        sameSite: "lax",
-      });
-    } catch (e) {
-      console.error("Cookie sync error:", e);
-    }
+    // 전체 발행 회차 배열을 쿠키에 동기화 (핵심 수정)
+    const allIssues = readIssues();
+    await syncPublishedIssuesToCookie(allIssues);
+    await syncArticleToCookie(updatedIssue);
 
-    // 캐시 정화 (Revalidation)
     revalidatePath("/");
     revalidatePath("/archive");
     revalidatePath("/admin");
@@ -169,23 +115,17 @@ export async function publishIssue(
   }
 }
 
-// ──────────────────────────────────────────────
-// 회차 삭제
-// ──────────────────────────────────────────────
+// ── 회차 삭제 ─────────────────────────────────────────────────────
 export async function deleteIssue(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const { readIssues, writeIssues } = await import("./data");
     const issues = readIssues();
     writeIssues(issues.filter((i) => i.id !== id));
 
-    try {
-      const cookieStore = await cookies();
-      cookieStore.delete("latest_published_issue");
-    } catch {
-      // Ignore
-    }
+    // 삭제 후 남은 발행 회차로 쿠키 갱신
+    const remaining = readIssues();
+    await syncPublishedIssuesToCookie(remaining);
 
     revalidatePath("/");
     revalidatePath("/archive");
