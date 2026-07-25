@@ -4,6 +4,9 @@ import AdminHeader from "@/components/admin/AdminHeader";
 import { getIssues } from "@/lib/issue-actions";
 import type { Issue } from "@/lib/types";
 
+// 쿠키 기반 데이터를 매 요청마다 읽기 위해 강제 동적 렌더링
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "관리자 대시보드 | Katholike Ekklesia",
 };
