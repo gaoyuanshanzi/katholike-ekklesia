@@ -1,4 +1,4 @@
-import { readIssuesAsync, readIssueAsync } from "./data";
+import { readIssuesAsync } from "./data";
 import type { Issue, Article } from "./types";
 
 export const PASTORAL_HERO_IMAGE = "/images/pastoral_village.jpg";
@@ -6,9 +6,24 @@ export const PASTORAL_HERO_IMAGE = "/images/pastoral_village.jpg";
 // ── 발행된 전체 회차 목록 조회 ────────────────────────────────────
 export async function getPublishedIssues(): Promise<Issue[]> {
   const allIssues = await readIssuesAsync();
-  return allIssues
+  const published = allIssues
     .filter((i) => i.status === "PUBLISHED")
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  if (published.length > 0) {
+    return published;
+  }
+
+  // 예외 방어: 만약 기사가 1개 이상 등록된 회차가 있으면 해당 회차를 기본 반환
+  const withArticles = allIssues
+    .filter((i) => i.articles && i.articles.length > 0)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  if (withArticles.length > 0) {
+    return withArticles;
+  }
+
+  return [];
 }
 
 // ── 최신 발행 회차 1건 조회 ───────────────────────────────────────
@@ -29,10 +44,6 @@ export async function getArticleById(
   return null;
 }
 
-// ── 쿠키 동기화 함수 (DB 전환 후 더 이상 필요 없음, 호환성 유지) ─
-export async function syncPublishedIssuesToCookie(_issues: Issue[]) {
-  // DB 사용 시 쿠키 동기화 불필요
-}
-export async function syncArticleToCookie(_issue: Issue) {
-  // DB 사용 시 쿠키 동기화 불필요
-}
+// ── 호환성 유지용 빈 함수 ─────────────────────────────────────────
+export async function syncPublishedIssuesToCookie(_issues: Issue[]) {}
+export async function syncArticleToCookie(_issue: Issue) {}

@@ -94,6 +94,17 @@ async function dbUpsertIssue(issue: Issue): Promise<void> {
   try {
     const prisma = await getPrisma();
     await prisma.$transaction(async (tx) => {
+      // 동일 Volume 번호를 지닌 다른 ID의 기존 레코드 충돌 제거
+      const conflict = await tx.issue.findFirst({
+        where: {
+          volume: issue.volume,
+          id: { not: issue.id },
+        },
+      });
+      if (conflict) {
+        await tx.issue.delete({ where: { id: conflict.id } });
+      }
+
       await tx.issue.upsert({
         where: { id: issue.id },
         create: {
@@ -119,7 +130,7 @@ async function dbUpsertIssue(issue: Issue): Promise<void> {
       if (issue.articles.length > 0) {
         await tx.article.createMany({
           data: issue.articles.map((a) => ({
-            id: a.id,
+            id: a.id || crypto.randomUUID(),
             issueId: issue.id,
             order: a.order,
             title: a.title,
@@ -152,7 +163,7 @@ async function dbDeleteIssue(id: string): Promise<void> {
   }
 }
 
-// ── 파일 스토리지 Fallback (로컬 개발용) ─────────────────────────
+// ── 파일 스토리지 Fallback ───────────────────────────────────────
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -213,7 +224,7 @@ function fileUpsertIssue(issue: Issue) {
   fileWriteIssues(issues);
 }
 
-// ── 공개 API (DB 우선, 실패 시 파일 Fallback) ────────────────────
+// ── 공개 API (DB 우선) ───────────────────────────────────────────
 export async function readIssuesAsync(): Promise<Issue[]> {
   if (USE_DB) return dbReadIssues();
   return fileReadIssues();
