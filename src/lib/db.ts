@@ -5,12 +5,19 @@ import { Pool } from "pg";
 export const NEON_DATABASE_URL =
   "postgresql://neondb_owner:npg_XEhUzJl49NxY@ep-rough-frog-aywvbbxa.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require";
 
-const prismaClientSingleton = () => {
-  const connectionString = process.env.DATABASE_URL || NEON_DATABASE_URL;
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = NEON_DATABASE_URL;
+}
 
+const connectionString = process.env.DATABASE_URL || NEON_DATABASE_URL;
+
+const prismaClientSingleton = () => {
   const pool = new Pool({
     connectionString,
     ssl: { rejectUnauthorized: false },
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
   });
 
   const adapter = new PrismaPg(pool);
