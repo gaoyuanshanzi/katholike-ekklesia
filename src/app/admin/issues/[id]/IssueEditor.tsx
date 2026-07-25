@@ -301,12 +301,21 @@ export default function IssueEditor({ issue }: { issue: Issue }) {
     setArticles((prev) => prev.map((a, i) => (i === idx ? updated : a)));
   }
 
+  const prepareArticles = useCallback(() => {
+    return articles.map((a) => ({
+      ...a,
+      title: a.title.trim() || `기사 ${a.order}`,
+      author: a.author.trim() || "편집부",
+    }));
+  }, [articles]);
+
   const handleSave = useCallback(() => {
     startTransition(async () => {
+      const sanitized = prepareArticles();
       const result = await saveIssue(
         issue.id,
         { volume, title, publishDate },
-        articles
+        sanitized
       );
       if (result.ok) {
         showToast("✅ 임시 저장되었습니다.", "success");
@@ -314,12 +323,13 @@ export default function IssueEditor({ issue }: { issue: Issue }) {
         showToast(`❌ 저장 실패: ${result.error}`, "error");
       }
     });
-  }, [issue.id, volume, title, publishDate, articles]);
+  }, [issue.id, volume, title, publishDate, prepareArticles]);
 
   const handlePublish = useCallback(() => {
     if (!confirm("즉시 발행하시겠습니까? 발행 후에도 수정은 가능합니다.")) return;
     startTransition(async () => {
-      await saveIssue(issue.id, { volume, title, publishDate }, articles);
+      const sanitized = prepareArticles();
+      await saveIssue(issue.id, { volume, title, publishDate }, sanitized);
       const result = await publishIssue(issue.id);
       if (result.ok) {
         setIsPublished(true);
@@ -328,7 +338,7 @@ export default function IssueEditor({ issue }: { issue: Issue }) {
         showToast(`❌ 발행 실패: ${result.error}`, "error");
       }
     });
-  }, [issue.id, volume, title, publishDate, articles]);
+  }, [issue.id, volume, title, publishDate, prepareArticles]);
 
   return (
     <>

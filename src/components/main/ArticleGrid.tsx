@@ -44,7 +44,7 @@ export default function ArticleGrid({ articles }: { articles: Article[] }) {
               </div>
 
               <h3 className="mt-2 font-serif text-lg font-bold leading-snug text-slate-900 transition duration-300 group-hover:text-amber-800">
-                {article.title}
+                {article.title || `기사 ${article.order}`}
               </h3>
 
               <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
