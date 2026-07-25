@@ -1,6 +1,4 @@
-// Prisma DB 기반 데이터 레이어
-// DATABASE_URL이 없을 때는 로컬 파일 스토리지로 fallback
-
+// Prisma DB 기반 데이터 레이어 (SSL 안전 지원 + 로컬 Fallback)
 import type { Issue } from "./types";
 
 const USE_DB = !!process.env.DATABASE_URL;
@@ -38,98 +36,120 @@ function toIssue(raw: {
     id: raw.id,
     volume: raw.volume,
     title: raw.title,
-    publishDate: raw.publishDate.toISOString().split("T")[0],
+    publishDate: raw.publishDate ? raw.publishDate.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
     status: raw.status as "DRAFT" | "PUBLISHED",
-    createdAt: raw.createdAt.toISOString(),
-    updatedAt: raw.updatedAt.toISOString(),
-    articles: raw.articles
+    createdAt: raw.createdAt ? raw.createdAt.toISOString() : new Date().toISOString(),
+    updatedAt: raw.updatedAt ? raw.updatedAt.toISOString() : new Date().toISOString(),
+    articles: (raw.articles || [])
       .sort((a, b) => a.order - b.order)
       .map((a) => ({
         id: a.id,
         issueId: a.issueId,
         order: a.order,
         title: a.title,
-        description: a.description,
-        content: a.content,
-        coverImageUrl: a.coverImageUrl,
-        author: a.author,
-        readTime: a.readTime,
-        isFeatured: a.isFeatured,
-        createdAt: a.createdAt.toISOString(),
-        updatedAt: a.updatedAt.toISOString(),
+        description: a.description || "",
+        content: a.content || "",
+        coverImageUrl: a.coverImageUrl || "",
+        author: a.author || "",
+        readTime: a.readTime || 5,
+        isFeatured: a.isFeatured || false,
+        createdAt: a.createdAt ? a.createdAt.toISOString() : new Date().toISOString(),
+        updatedAt: a.updatedAt ? a.updatedAt.toISOString() : new Date().toISOString(),
       })),
   };
 }
 
 // ── DB 기반 함수들 ────────────────────────────────────────────────
 async function dbReadIssues(): Promise<Issue[]> {
-  const prisma = await getPrisma();
-  const rows = await prisma.issue.findMany({
-    include: { articles: true },
-    orderBy: { volume: "desc" },
-  });
-  return rows.map(toIssue);
+  try {
+    const prisma = await getPrisma();
+    const rows = await prisma.issue.findMany({
+      include: { articles: true },
+      orderBy: { volume: "desc" },
+    });
+    return rows.map(toIssue);
+  } catch (err) {
+    console.error("[dbReadIssues] DB query failed, falling back:", err);
+    return fileReadIssues();
+  }
 }
 
 async function dbReadIssue(id: string): Promise<Issue | null> {
-  const prisma = await getPrisma();
-  const row = await prisma.issue.findUnique({
-    where: { id },
-    include: { articles: true },
-  });
-  if (!row) return null;
-  return toIssue(row);
+  try {
+    const prisma = await getPrisma();
+    const row = await prisma.issue.findUnique({
+      where: { id },
+      include: { articles: true },
+    });
+    if (!row) return null;
+    return toIssue(row);
+  } catch (err) {
+    console.error("[dbReadIssue] DB query failed, falling back:", err);
+    const issues = fileReadIssues();
+    return issues.find((i) => i.id === id) ?? null;
+  }
 }
 
 async function dbUpsertIssue(issue: Issue): Promise<void> {
-  const prisma = await getPrisma();
-  await prisma.$transaction(async (tx) => {
-    await tx.issue.upsert({
-      where: { id: issue.id },
-      create: {
-        id: issue.id,
-        volume: issue.volume,
-        title: issue.title,
-        publishDate: new Date(issue.publishDate),
-        status: issue.status,
-        createdAt: new Date(issue.createdAt),
-        updatedAt: new Date(issue.updatedAt),
-      },
-      update: {
-        volume: issue.volume,
-        title: issue.title,
-        publishDate: new Date(issue.publishDate),
-        status: issue.status,
-        updatedAt: new Date(issue.updatedAt),
-      },
-    });
-
-    // 기존 기사 삭제 후 재삽입
-    await tx.article.deleteMany({ where: { issueId: issue.id } });
-    if (issue.articles.length > 0) {
-      await tx.article.createMany({
-        data: issue.articles.map((a) => ({
-          id: a.id,
-          issueId: issue.id,
-          order: a.order,
-          title: a.title,
-          description: a.description,
-          content: a.content,
-          coverImageUrl: a.coverImageUrl,
-          author: a.author,
-          readTime: a.readTime,
-          isFeatured: a.isFeatured,
-          createdAt: new Date(a.createdAt),
-          updatedAt: new Date(a.updatedAt),
-        })),
+  try {
+    const prisma = await getPrisma();
+    await prisma.$transaction(async (tx) => {
+      await tx.issue.upsert({
+        where: { id: issue.id },
+        create: {
+          id: issue.id,
+          volume: issue.volume,
+          title: issue.title,
+          publishDate: new Date(issue.publishDate),
+          status: issue.status,
+          createdAt: new Date(issue.createdAt),
+          updatedAt: new Date(issue.updatedAt),
+        },
+        update: {
+          volume: issue.volume,
+          title: issue.title,
+          publishDate: new Date(issue.publishDate),
+          status: issue.status,
+          updatedAt: new Date(issue.updatedAt),
+        },
       });
-    }
-  });
+
+      // 기존 기사 삭제 후 재삽입
+      await tx.article.deleteMany({ where: { issueId: issue.id } });
+      if (issue.articles.length > 0) {
+        await tx.article.createMany({
+          data: issue.articles.map((a) => ({
+            id: a.id,
+            issueId: issue.id,
+            order: a.order,
+            title: a.title,
+            description: a.description || "",
+            content: a.content || "",
+            coverImageUrl: a.coverImageUrl || "",
+            author: a.author || "",
+            readTime: a.readTime || 5,
+            isFeatured: a.isFeatured || false,
+            createdAt: new Date(a.createdAt),
+            updatedAt: new Date(a.updatedAt),
+          })),
+        });
+      }
+    });
+  } catch (err) {
+    console.error("[dbUpsertIssue] DB upsert failed, saving to file fallback:", err);
+    fileUpsertIssue(issue);
+  }
 }
 
 async function dbDeleteIssue(id: string): Promise<void> {
-  const prisma = await getPrisma();
-  await prisma.issue.delete({ where: { id } });
+  try {
+    const prisma = await getPrisma();
+    await prisma.issue.delete({ where: { id } });
+  } catch (err) {
+    console.error("[dbDeleteIssue] DB delete failed, deleting from file fallback:", err);
+    const issues = fileReadIssues();
+    fileWriteIssues(issues.filter((i) => i.id !== id));
+  }
 }
 
 // ── 파일 스토리지 Fallback (로컬 개발용) ─────────────────────────
@@ -185,7 +205,15 @@ function fileWriteIssues(issues: Issue[]) {
   }
 }
 
-// ── 공개 API (DB 또는 파일 자동 선택) ────────────────────────────
+function fileUpsertIssue(issue: Issue) {
+  const issues = fileReadIssues();
+  const idx = issues.findIndex((i) => i.id === issue.id);
+  if (idx >= 0) issues[idx] = issue;
+  else issues.unshift(issue);
+  fileWriteIssues(issues);
+}
+
+// ── 공개 API (DB 우선, 실패 시 파일 Fallback) ────────────────────
 export async function readIssuesAsync(): Promise<Issue[]> {
   if (USE_DB) return dbReadIssues();
   return fileReadIssues();
@@ -202,11 +230,7 @@ export async function upsertIssueAsync(issue: Issue): Promise<void> {
     await dbUpsertIssue(issue);
     return;
   }
-  const issues = fileReadIssues();
-  const idx = issues.findIndex((i) => i.id === issue.id);
-  if (idx >= 0) issues[idx] = issue;
-  else issues.unshift(issue);
-  fileWriteIssues(issues);
+  fileUpsertIssue(issue);
 }
 
 export async function deleteIssueAsync(id: string): Promise<void> {
@@ -218,7 +242,7 @@ export async function deleteIssueAsync(id: string): Promise<void> {
   fileWriteIssues(issues.filter((i) => i.id !== id));
 }
 
-// ── 동기 호환 레이어 (기존 코드와의 호환성 유지) ─────────────────
+// ── 동기 호환 레이어 ──────────────────────────────────────────────
 export function readIssues(): Issue[] {
   return fileReadIssues();
 }
@@ -228,9 +252,5 @@ export function writeIssues(issues: Issue[]) {
 }
 
 export function upsertIssue(issue: Issue) {
-  const issues = fileReadIssues();
-  const idx = issues.findIndex((i) => i.id === issue.id);
-  if (idx >= 0) issues[idx] = issue;
-  else issues.unshift(issue);
-  fileWriteIssues(issues);
+  fileUpsertIssue(issue);
 }

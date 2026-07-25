@@ -3,8 +3,20 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
 const prismaClientSingleton = () => {
-  const connectionString = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/katholike_ekklesia?schema=public";
-  const pool = new Pool({ connectionString });
+  const connectionString =
+    process.env.DATABASE_URL ||
+    "postgresql://postgres:postgres@localhost:5432/katholike_ekklesia?schema=public";
+
+  const isRemote =
+    connectionString.includes("neon.tech") ||
+    connectionString.includes("sslmode=require") ||
+    process.env.NODE_ENV === "production";
+
+  const pool = new Pool({
+    connectionString,
+    ssl: isRemote ? { rejectUnauthorized: false } : undefined,
+  });
+
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 };
