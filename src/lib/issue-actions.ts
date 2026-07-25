@@ -1,69 +1,42 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { readIssues, readIssue, upsertIssue, writeIssues } from "./data";
-import { syncPublishedIssuesToCookie, syncArticleToCookie } from "./public-actions";
+import { readIssuesAsync, readIssueAsync, upsertIssueAsync, deleteIssueAsync } from "./data";
 import type { Issue, ArticleInput, IssueInput } from "./types";
 
-const COOKIE_NAME = "ke_published_issues";
-
-// ── 쿠키에서 발행 회차 배열 읽기 ─────────────────────────────────
-async function getPublishedFromCookie(): Promise<Issue[]> {
-  try {
-    const cookieStore = await cookies();
-    const val = cookieStore.get(COOKIE_NAME)?.value;
-    if (!val) return [];
-    const parsed = JSON.parse(val);
-    if (!Array.isArray(parsed)) return [];
-    return parsed as Issue[];
-  } catch {
-    return [];
-  }
-}
-
-// ── 회차 목록 조회 (파일 + 쿠키 병합) ────────────────────────────
+// ── 회차 목록 조회 ────────────────────────────────────────────────
 export async function getIssues(): Promise<Issue[]> {
-  // 1. 파일 스토리지에서 읽기
-  const fromFile = readIssues();
-
-  // 2. 쿠키에서 발행 회차 읽기 (Vercel 람다 인스턴스 간 동기화)
-  const fromCookie = await getPublishedFromCookie();
-
-  // 3. 병합: 파일에 없는 쿠키 항목을 추가
-  const merged = [...fromFile];
-  for (const ci of fromCookie) {
-    if (!merged.some((m) => m.id === ci.id)) {
-      merged.push(ci);
-    }
-  }
-
-  return merged.sort(
+  const issues = await readIssuesAsync();
+  return issues.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
 // ── 단건 회차 조회 ────────────────────────────────────────────────
 export async function getIssue(id: string): Promise<Issue> {
-  // 파일에서 먼저 조회
-  const fromFile = readIssues();
-  const found = fromFile.find((i) => i.id === id);
+  const found = await readIssueAsync(id);
   if (found) return found;
 
-  // 쿠키에서 조회
-  const fromCookie = await getPublishedFromCookie();
-  const fromCookieItem = fromCookie.find((i) => i.id === id);
-  if (fromCookieItem) return fromCookieItem;
-
-  // 없으면 빈 draft 반환
-  return readIssue(id);
+  // 없으면 새 draft 반환
+  const issues = await readIssuesAsync();
+  const maxVolume = issues.length > 0 ? Math.max(...issues.map((i) => i.volume)) : 0;
+  const now = new Date().toISOString();
+  return {
+    id,
+    volume: maxVolume + 1,
+    title: `제${maxVolume + 1}호`,
+    publishDate: new Date().toISOString().split("T")[0],
+    status: "DRAFT",
+    articles: [],
+    createdAt: now,
+    updatedAt: now,
+  };
 }
 
 // ── 새 회차 생성 (DRAFT) ──────────────────────────────────────────
 export async function createIssue(): Promise<string> {
-  const allIssues = await getIssues();
-  const maxVolume =
-    allIssues.length > 0 ? Math.max(...allIssues.map((i) => i.volume)) : 0;
+  const issues = await readIssuesAsync();
+  const maxVolume = issues.length > 0 ? Math.max(...issues.map((i) => i.volume)) : 0;
   const now = new Date().toISOString();
 
   const newIssue: Issue = {
@@ -77,7 +50,7 @@ export async function createIssue(): Promise<string> {
     updatedAt: now,
   };
 
-  upsertIssue(newIssue);
+  await upsertIssueAsync(newIssue);
   revalidatePath("/admin");
   return newIssue.id;
 }
@@ -108,17 +81,7 @@ export async function saveIssue(
       updatedAt: now,
     };
 
-    upsertIssue(updatedIssue);
-
-    // 발행 상태면 쿠키도 갱신
-    if (updatedIssue.status === "PUBLISHED") {
-      const allIssues = await getIssues();
-      // 현재 수정된 것으로 교체
-      const merged = allIssues.map((i) => i.id === updatedIssue.id ? updatedIssue : i);
-      await syncPublishedIssuesToCookie(merged);
-      await syncArticleToCookie(updatedIssue);
-    }
-
+    await upsertIssueAsync(updatedIssue);
     revalidatePath("/");
     revalidatePath("/archive");
     revalidatePath("/admin");
@@ -141,14 +104,7 @@ export async function publishIssue(
       updatedAt: new Date().toISOString(),
     };
 
-    upsertIssue(updatedIssue);
-
-    // 전체 발행 회차 배열을 쿠키에 동기화
-    const allIssues = await getIssues();
-    const merged = allIssues.map((i) => i.id === updatedIssue.id ? updatedIssue : i);
-    await syncPublishedIssuesToCookie(merged);
-    await syncArticleToCookie(updatedIssue);
-
+    await upsertIssueAsync(updatedIssue);
     revalidatePath("/");
     revalidatePath("/archive");
     revalidatePath("/admin");
@@ -164,15 +120,7 @@ export async function deleteIssue(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    // 파일에서 삭제
-    const fileIssues = readIssues();
-    writeIssues(fileIssues.filter((i) => i.id !== id));
-
-    // 쿠키에서도 제거 후 재동기화
-    const allIssues = await getIssues();
-    const remaining = allIssues.filter((i) => i.id !== id);
-    await syncPublishedIssuesToCookie(remaining);
-
+    await deleteIssueAsync(id);
     revalidatePath("/");
     revalidatePath("/archive");
     revalidatePath("/admin");

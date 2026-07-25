@@ -5,6 +5,8 @@ import Header from "@/components/main/Header";
 import Footer from "@/components/main/Footer";
 import { getPublishedIssues } from "@/lib/public-actions";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "지난 호 보기 (Archive) | Katholike Ekklesia",
   description: "Katholike Ekklesia 웹진의 지난 회차 모음",
