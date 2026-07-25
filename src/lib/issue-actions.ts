@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { readIssues, readIssue, upsertIssue } from "./data";
 import type { Issue, ArticleInput, IssueInput } from "./types";
 
@@ -8,16 +9,49 @@ import type { Issue, ArticleInput, IssueInput } from "./types";
 // 회차 목록 조회
 // ──────────────────────────────────────────────
 export async function getIssues(): Promise<Issue[]> {
-  return readIssues().sort(
+  const issues = readIssues();
+
+  // 쿠키에 보관된 발행 건이 있으면 병합
+  try {
+    const cookieStore = await cookies();
+    const cookieVal = cookieStore.get("latest_published_issue")?.value;
+    if (cookieVal) {
+      const parsed = JSON.parse(cookieVal) as Issue;
+      if (parsed && !issues.some((i) => i.id === parsed.id)) {
+        issues.unshift(parsed);
+      }
+    }
+  } catch {
+    // Ignore
+  }
+
+  return issues.sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 }
 
 // ──────────────────────────────────────────────
-// 단건 회차 조회 (서버리스 404 방지 지원)
+// 단건 회차 조회
 // ──────────────────────────────────────────────
 export async function getIssue(id: string): Promise<Issue> {
-  return readIssue(id);
+  const issue = readIssue(id);
+  if (issue.articles.length > 0) return issue;
+
+  // 쿠키 저장본에서 복원 시도
+  try {
+    const cookieStore = await cookies();
+    const cookieVal = cookieStore.get("latest_published_issue")?.value;
+    if (cookieVal) {
+      const parsed = JSON.parse(cookieVal) as Issue;
+      if (parsed && parsed.id === id) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore
+  }
+
+  return issue;
 }
 
 // ──────────────────────────────────────────────
@@ -32,7 +66,7 @@ export async function createIssue(): Promise<string> {
     id: crypto.randomUUID(),
     volume: maxVolume + 1,
     title: `제${maxVolume + 1}호`,
-    publishDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    publishDate: new Date().toISOString().split("T")[0],
     status: "DRAFT",
     articles: [],
     createdAt: now,
@@ -54,7 +88,6 @@ export async function saveIssue(
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const existing = readIssue(id);
-
     const now = new Date().toISOString();
     const updatedArticles = articles.map((a) => ({
       ...a,
@@ -64,13 +97,31 @@ export async function saveIssue(
       updatedAt: now,
     }));
 
-    upsertIssue({
+    const updatedIssue: Issue = {
       ...existing,
       ...issueInput,
       articles: updatedArticles,
       updatedAt: now,
-    });
+    };
 
+    upsertIssue(updatedIssue);
+
+    // 발행 상태인 경우 쿠키 동기화
+    if (updatedIssue.status === "PUBLISHED") {
+      try {
+        const cookieStore = await cookies();
+        cookieStore.set("latest_published_issue", JSON.stringify(updatedIssue), {
+          path: "/",
+          maxAge: 60 * 60 * 24 * 365,
+          sameSite: "lax",
+        });
+      } catch {
+        // Ignore
+      }
+    }
+
+    revalidatePath("/");
+    revalidatePath("/archive");
     revalidatePath("/admin");
     revalidatePath(`/admin/issues/${id}`);
     return { ok: true };
@@ -80,20 +131,36 @@ export async function saveIssue(
 }
 
 // ──────────────────────────────────────────────
-// 회차 즉시 발행
+// 회차 즉시 발행 (캐시 갱신 + 쿠키 동기화)
 // ──────────────────────────────────────────────
 export async function publishIssue(
   id: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const existing = readIssue(id);
-
-    upsertIssue({
+    const updatedIssue: Issue = {
       ...existing,
       status: "PUBLISHED",
       updatedAt: new Date().toISOString(),
-    });
+    };
 
+    upsertIssue(updatedIssue);
+
+    // Vercel 서버리스 람다 간 동기화를 위한 쿠키 저장
+    try {
+      const cookieStore = await cookies();
+      cookieStore.set("latest_published_issue", JSON.stringify(updatedIssue), {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+      });
+    } catch (e) {
+      console.error("Cookie sync error:", e);
+    }
+
+    // 캐시 정화 (Revalidation)
+    revalidatePath("/");
+    revalidatePath("/archive");
     revalidatePath("/admin");
     revalidatePath(`/admin/issues/${id}`);
     return { ok: true };
@@ -112,6 +179,16 @@ export async function deleteIssue(
     const { readIssues, writeIssues } = await import("./data");
     const issues = readIssues();
     writeIssues(issues.filter((i) => i.id !== id));
+
+    try {
+      const cookieStore = await cookies();
+      cookieStore.delete("latest_published_issue");
+    } catch {
+      // Ignore
+    }
+
+    revalidatePath("/");
+    revalidatePath("/archive");
     revalidatePath("/admin");
     return { ok: true };
   } catch (err) {
