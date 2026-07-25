@@ -40,7 +40,7 @@ export default function Header() {
               Katholike Ekklesia
             </span>
             <span className="ml-2 hidden text-2xs uppercase tracking-widest text-slate-500 sm:inline-block">
-              월간 가톨릭 웹진
+              월간 보편교회 웹진
             </span>
           </div>
         </Link>

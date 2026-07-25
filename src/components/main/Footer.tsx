@@ -13,7 +13,7 @@ export default function Footer() {
             </div>
             <div>
               <span className="font-cinzel text-base font-bold text-slate-900">Katholike Ekklesia</span>
-              <p className="text-xs text-slate-500">월간 가톨릭 웹진</p>
+              <p className="text-xs text-slate-500">월간 보편교회 웹진</p>
             </div>
           </div>
 

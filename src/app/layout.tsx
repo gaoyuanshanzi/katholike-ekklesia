@@ -15,7 +15,7 @@ const notoSerifKR = Noto_Serif_KR({
 });
 
 export const metadata: Metadata = {
-  title: "Katholike Ekklesia | 월간 가톨릭 웹진",
+  title: "Katholike Ekklesia | 월간 보편교회 웹진",
   description: "Katholike Ekklesia - 보편되고 거룩한 교회의 신앙과 삶을 나누는 월간 웹진",
 };
 

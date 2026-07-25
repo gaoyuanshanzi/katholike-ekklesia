@@ -52,9 +52,8 @@ export default function HeroSection({ volume, issueTitle, publishDate }: HeroPro
                 {issueTitle}
               </p>
 
-              <p className="mt-3 text-xs leading-relaxed text-slate-100 sm:text-sm md:text-base max-w-xl drop-shadow-sm">
-                산기슭 아래 소박한 오두막집과 들판 속에서 들려오는 평화의 종소리.
-                보편되고 거룩한 교회의 신앙과 삶을 나누는 공간입니다.
+              <p className="mt-3 text-xs leading-relaxed text-slate-100 sm:text-sm md:text-base max-w-2xl drop-shadow-sm font-medium">
+                사도신경의 &quot;거룩한 공회(공교회)를 믿사오며&quot; 할 때의 &apos;공회&apos;가 바로 이 보편교회(카톨리케 에클레시아)를 의미하는 것이며, 이 땅의 그리스도인들을 차별없이 받는 보편적인 교회를 말합니다. 우리는 하나님의 은혜로 구원받고 거듭난 믿는이들과 함께 보편교회를 건축하며, 이 땅에 하나님의 움직이심에 동참하기를 원하는 성도들의 모임입니다.
               </p>
             </div>
           </div>
