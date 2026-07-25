@@ -25,10 +25,9 @@ export default function LoginForm() {
           id="username"
           name="username"
           type="text"
-          defaultValue="admin"
           required
-          autoComplete="username"
-          placeholder="admin"
+          autoComplete="off"
+          placeholder="아이디 입력"
           className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
           style={{ fontSize: "16px" }}
         />
@@ -42,10 +41,9 @@ export default function LoginForm() {
           id="password"
           name="password"
           type="password"
-          defaultValue="bopyun"
           required
-          autoComplete="current-password"
-          placeholder="••••••••"
+          autoComplete="new-password"
+          placeholder="비밀번호 입력"
           className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 placeholder-slate-400 outline-none focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
           style={{ fontSize: "16px" }}
         />
