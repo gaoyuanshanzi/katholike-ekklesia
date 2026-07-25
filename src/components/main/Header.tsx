@@ -32,27 +32,44 @@ export default function Header({ issues = [], currentIssue }: HeaderProps) {
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md shadow-xs">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5 sm:px-6">
           {/* Brand Logo & Title */}
-          <Link href="/" className="group flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-600/30 bg-amber-50 shadow-xs transition duration-300 group-hover:border-amber-600">
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-600/30 bg-amber-50 shadow-xs transition duration-300 hover:border-amber-600">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.5"
-                className="h-5 w-5 text-amber-700 transition duration-300 group-hover:scale-110"
+                className="h-5 w-5 text-amber-700 transition duration-300 hover:scale-110"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v18M3 12h18" />
               </svg>
+            </Link>
+            <div className="flex flex-col">
+              <div className="flex items-baseline gap-2">
+                <Link href="/" className="font-cinzel text-lg font-bold tracking-wider text-slate-900 sm:text-xl hover:text-amber-800 transition">
+                  Katholike Ekklesia
+                </Link>
+                <span className="hidden text-xs font-semibold tracking-wider text-slate-500 sm:inline-block">
+                  월간 보편교회 웹진
+                </span>
+              </div>
+              <a
+                href="https://cafe.naver.com/bopyun"
+                target="_blank"
+                rel="noopener noreferrer"
+                id="naver-cafe-btn"
+                className="mt-0.5 inline-flex items-center gap-1.5 self-start rounded-md border border-emerald-200 bg-emerald-50/80 px-2 py-0.5 text-xs font-bold text-emerald-800 transition hover:border-emerald-400 hover:bg-emerald-100 hover:text-emerald-950 shadow-2xs active:scale-95"
+              >
+                <span className="flex h-3.5 w-3.5 items-center justify-center rounded bg-emerald-600 text-[9px] font-black text-white">
+                  N
+                </span>
+                <span>보편교회 네이버 카페로 이동</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3 w-3 text-emerald-600">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H18m0 0v4.5m0-4.5L8.25 15.75" />
+                </svg>
+              </a>
             </div>
-            <div>
-              <span className="font-cinzel text-lg font-bold tracking-wider text-slate-900 sm:text-xl">
-                Katholike Ekklesia
-              </span>
-              <span className="ml-2 hidden text-2xs uppercase tracking-widest text-slate-500 sm:inline-block">
-                월간 보편교회 웹진
-              </span>
-            </div>
-          </Link>
+          </div>
 
           {/* PC Horizontal Nav + Export Button */}
           <div className="hidden items-center gap-6 md:flex">
