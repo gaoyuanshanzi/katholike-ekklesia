@@ -4,17 +4,18 @@ import HeroSection from "@/components/main/HeroSection";
 import FeaturedArticle from "@/components/main/FeaturedArticle";
 import ArticleGrid from "@/components/main/ArticleGrid";
 import Footer from "@/components/main/Footer";
-import { getLatestPublishedIssue } from "@/lib/public-actions";
+import { getPublishedIssues } from "@/lib/public-actions";
 
 export default async function HomePage() {
-  const currentIssue = await getLatestPublishedIssue();
+  const publishedIssues = await getPublishedIssues();
+  const currentIssue = publishedIssues.length > 0 ? publishedIssues[0] : null;
 
   const heroArticle = currentIssue?.articles.find((a) => a.order === 1) || currentIssue?.articles[0];
   const subArticles = currentIssue?.articles.filter((a) => a.id !== heroArticle?.id) || [];
 
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f5] text-slate-900">
-      <Header />
+      <Header issues={publishedIssues} currentIssue={currentIssue} />
 
       <main className="flex-1">
         {/* Pastoral Village Hero Section */}

@@ -15,7 +15,7 @@ export default async function ArchivePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f5] text-slate-900">
-      <Header />
+      <Header issues={issues} />
 
       <main className="flex-1 pb-20 pt-10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">

@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/main/Header";
 import Footer from "@/components/main/Footer";
 import MobileShareBar from "./MobileShareBar";
-import { getArticleById } from "@/lib/public-actions";
+import { getArticleById, getPublishedIssues } from "@/lib/public-actions";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ArticleDetailPage({ params }: Props) {
   const { id } = await params;
   const result = await getArticleById(id);
+  const publishedIssues = await getPublishedIssues();
 
   if (!result) {
     notFound();
@@ -31,7 +32,7 @@ export default async function ArticleDetailPage({ params }: Props) {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#faf9f5] text-slate-900">
-      <Header />
+      <Header issues={publishedIssues} currentIssue={issue} />
 
       <main className="flex-1 pb-24">
         {/* Sub Header Navigation */}
