@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AdminHeader from "@/components/admin/AdminHeader";
+import DeleteIssueButton from "@/components/admin/DeleteIssueButton";
 import { getIssues } from "@/lib/issue-actions";
 import type { Issue } from "@/lib/types";
 
@@ -100,7 +101,7 @@ export default async function AdminDashboardPage() {
                     <th className="px-6 py-4">발행일</th>
                     <th className="px-6 py-4">기사</th>
                     <th className="px-6 py-4">상태</th>
-                    <th className="px-6 py-4 text-right">편집</th>
+                    <th className="px-6 py-4 text-right">관리</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -122,15 +123,18 @@ export default async function AdminDashboardPage() {
                         <StatusBadge status={issue.status} />
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link
-                          href={`/admin/issues/${issue.id}`}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-900 shadow-2xs"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                          </svg>
-                          편집
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/admin/issues/${issue.id}`}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-900 shadow-2xs"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                            </svg>
+                            편집
+                          </Link>
+                          <DeleteIssueButton issueId={issue.id} volume={issue.volume} title={issue.title} />
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -141,13 +145,12 @@ export default async function AdminDashboardPage() {
             {/* 모바일: 카드 목록 */}
             <div className="space-y-3 md:hidden">
               {issues.map((issue) => (
-                <Link
+                <div
                   key={issue.id}
-                  href={`/admin/issues/${issue.id}`}
-                  className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition active:scale-[0.98] hover:border-amber-400 hover:bg-amber-50/50"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-extrabold text-amber-700">Vol.{issue.volume}</span>
                         <StatusBadge status={issue.status} />
@@ -157,11 +160,21 @@ export default async function AdminDashboardPage() {
                         {formatDate(issue.publishDate)} · 기사 {issue.articles.length}개
                       </p>
                     </div>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-1 h-4 w-4 shrink-0 text-slate-400">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
                   </div>
-                </Link>
+
+                  <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                    <Link
+                      href={`/admin/issues/${issue.id}`}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-900 shadow-2xs"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                      </svg>
+                      편집
+                    </Link>
+                    <DeleteIssueButton issueId={issue.id} volume={issue.volume} title={issue.title} />
+                  </div>
+                </div>
               ))}
             </div>
           </>
