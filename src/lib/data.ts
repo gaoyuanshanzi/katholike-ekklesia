@@ -1,7 +1,7 @@
 // Prisma DB 기반 데이터 레이어 (SSL 안전 지원 + 로컬 Fallback)
 import type { Issue } from "./types";
 
-const USE_DB = !!process.env.DATABASE_URL;
+const USE_DB = true;
 
 // ── Prisma helpers ────────────────────────────────────────────────
 async function getPrisma() {
