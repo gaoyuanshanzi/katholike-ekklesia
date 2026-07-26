@@ -12,6 +12,7 @@ export type ArticleInput = {
   author: string;
   readTime: number;
   isFeatured: boolean;
+  views?: number;
 };
 
 export type IssueInput = {
@@ -23,6 +24,7 @@ export type IssueInput = {
 export type Article = ArticleInput & {
   id: string;
   issueId: string;
+  views: number;
   createdAt: string;
   updatedAt: string;
 };

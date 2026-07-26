@@ -53,6 +53,7 @@ function toIssue(raw: {
         author: a.author || "",
         readTime: a.readTime || 5,
         isFeatured: a.isFeatured || false,
+        views: (a as { views?: number }).views || 0,
         createdAt: a.createdAt ? a.createdAt.toISOString() : new Date().toISOString(),
         updatedAt: a.updatedAt ? a.updatedAt.toISOString() : new Date().toISOString(),
       })),
@@ -140,6 +141,7 @@ async function dbUpsertIssue(issue: Issue): Promise<void> {
             author: a.author || "",
             readTime: a.readTime || 5,
             isFeatured: a.isFeatured || false,
+            views: a.views || 0,
             createdAt: new Date(a.createdAt),
             updatedAt: new Date(a.updatedAt),
           })),
@@ -251,6 +253,30 @@ export async function deleteIssueAsync(id: string): Promise<void> {
   }
   const issues = fileReadIssues();
   fileWriteIssues(issues.filter((i) => i.id !== id));
+}
+
+export async function incrementArticleViewsAsync(articleId: string): Promise<void> {
+  if (USE_DB) {
+    try {
+      const prisma = await getPrisma();
+      await prisma.article.update({
+        where: { id: articleId },
+        data: { views: { increment: 1 } },
+      });
+      return;
+    } catch (err) {
+      console.error("[incrementArticleViewsAsync] DB update failed:", err);
+    }
+  }
+  const issues = fileReadIssues();
+  for (const issue of issues) {
+    const art = issue.articles.find((a) => a.id === articleId);
+    if (art) {
+      art.views = (art.views || 0) + 1;
+      fileWriteIssues(issues);
+      break;
+    }
+  }
 }
 
 // ── 동기 호환 레이어 ──────────────────────────────────────────────

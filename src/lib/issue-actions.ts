@@ -69,6 +69,7 @@ export async function saveIssue(
       ...a,
       id: a.id ?? crypto.randomUUID(),
       issueId: id,
+      views: a.views ?? existing.articles.find((ea) => ea.order === a.order)?.views ?? 0,
       createdAt:
         existing.articles.find((ea) => ea.order === a.order)?.createdAt ?? now,
       updatedAt: now,

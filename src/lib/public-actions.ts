@@ -1,4 +1,4 @@
-import { readIssuesAsync } from "./data";
+import { readIssuesAsync, incrementArticleViewsAsync } from "./data";
 import type { Issue, Article } from "./types";
 
 export const PASTORAL_HERO_IMAGE = "/images/pastoral_village.jpg";
@@ -39,7 +39,11 @@ export async function getArticleById(
   const allIssues = await readIssuesAsync();
   for (const issue of allIssues) {
     const found = issue.articles.find((a) => a.id === id);
-    if (found) return { article: found, issue };
+    if (found) {
+      // 조회수 (클릭수) 1 증가 (비동기)
+      incrementArticleViewsAsync(id).catch(() => {});
+      return { article: { ...found, views: (found.views || 0) + 1 }, issue };
+    }
   }
   return null;
 }
